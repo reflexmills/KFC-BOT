@@ -1084,9 +1084,9 @@ async def main():
         await dp.start_polling(bot)
     except Exception as e:
         logging.exception("❌ Ошибка в main, бот будет перезапущен")
-        sys.exit(1)  # Render перезапустит воркер
+        sys.exit(1)  # Выйти с ошибкой — Render перезапустит процесс
 
-if name == "main":
+if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
