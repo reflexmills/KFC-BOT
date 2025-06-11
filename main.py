@@ -1023,6 +1023,11 @@ async def change_balance_start(message: types.Message, state: FSMContext):
     )
     await state.set_state(AdminStates.changing_balance)
 
+@dp.message(F.text == "🔙 В главное меню")
+async def back_to_main_menu(message: types.Message, state: FSMContext):
+    await state.clear()
+    await message.answer("🏠 Главное меню", reply_markup=get_main_kb(message.from_user.id))
+    
 @dp.message(AdminStates.changing_balance, F.text.regexp(r'^\d+\s+-?\d+$'))
 async def change_balance_process(message: types.Message, state: FSMContext):
     user_id, amount = message.text.split()
