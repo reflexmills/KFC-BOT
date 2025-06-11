@@ -1078,7 +1078,6 @@ import logging
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from testA import dp, bot
 
 logging.basicConfig(level=logging.INFO)
 
