@@ -1067,10 +1067,23 @@ async def change_balance_process(message: types.Message, state: FSMContext):
     await state.clear()
     await cmd_admin(message)
 
-async def main():
-    # Удаляем вебхук, чтобы не было конфликта с polling
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+import asyncio
+import logging
+import sys
+from testA import dp, bot
 
-if __name__ == "__main__":
-    asyncio.run(main())
+logging.basicConfig(level=logging.INFO)
+
+async def main():
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        await dp.start_polling(bot)
+    except Exception as e:
+        logging.exception("❌ Ошибка в main, бот будет перезапущен")
+        sys.exit(1)  # Выйти с ошибкой — Render перезапустит процесс
+
+if name == "main":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logging.info("⏹️ Бот остановлен вручную")
