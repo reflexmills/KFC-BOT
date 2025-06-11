@@ -1073,19 +1073,35 @@ async def change_balance_process(message: types.Message, state: FSMContext):
     await cmd_admin(message)
 
 import asyncio
-import logging
 import sys
+import logging
+import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from testA import dp, bot
 
 logging.basicConfig(level=logging.INFO)
 
+# Фейковый веб-сервер, чтобы Render не убивал процесс
+def run_fake_server():
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+
 async def main():
     try:
-        run_fake_server()
+        run_fake_server()  # запускаем фейковый сервер
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     except Exception as e:
         logging.exception("❌ Ошибка в main, бот будет перезапущен")
-        sys.exit(1)  # Выйти с ошибкой — Render перезапустит процесс
+        sys.exit(1)
 
 if __name__ == "__main__":
     try:
