@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import requests
+import asyncio
 import logging
 import uuid
 from datetime import datetime
@@ -1066,7 +1067,6 @@ async def change_balance_process(message: types.Message, state: FSMContext):
     await state.clear()
     await cmd_admin(message)
 
-# Запуск бота
 async def main():
     await dp.start_polling(bot)
 
