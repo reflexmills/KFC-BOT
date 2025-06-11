@@ -1070,7 +1070,6 @@ async def change_balance_process(message: types.Message, state: FSMContext):
 import asyncio
 import logging
 import sys
-from testA import dp, bot
 
 logging.basicConfig(level=logging.INFO)
 
@@ -1082,7 +1081,7 @@ async def main():
         logging.exception("❌ Ошибка в main, бот будет перезапущен")
         sys.exit(1)  # Выйти с ошибкой — Render перезапустит процесс
 
-if name == "main":
+if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
