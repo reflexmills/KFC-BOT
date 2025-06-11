@@ -18,11 +18,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Инициализация бота
-bot = Bot(token="7753901897:AAEttPJIxWUrC03lP0BK2c6O0VhEDxt5pH8")
+bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 
 # Настройки платежей
-CRYPTO_BOT_TOKEN = "235686:AA0yvLh7rFlhYtfLvlSdQYhIMA2lSaSFISg"
+CRYPTO_BOT_TOKEN = os.getenv("CRYPTO_BOT_TOKEN")
 CRYPTO_BOT_API_URL = "https://pay.crypt.bot/api"
 USDT_RATE = Decimal('79')  # Курс USDT к рублю
 YOOMONEY_WALLET = "-"  # Номер кошелька
