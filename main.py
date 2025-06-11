@@ -1068,6 +1068,8 @@ async def change_balance_process(message: types.Message, state: FSMContext):
     await cmd_admin(message)
 
 async def main():
+    # Удаляем вебхук, чтобы не было конфликта с polling
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
