@@ -1113,7 +1113,6 @@ async def main():
     try:
         keep_alive()
         run_fake_server()
-        from core import bot, dp  # импорт после запуска серверов
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     except Exception as e:
