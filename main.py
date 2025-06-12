@@ -17,27 +17,6 @@ import time
 import threading
 import requests
 
-def keep_alive():
-    """
-    Отправляет HTTP-запрос каждые 5 минут на собственный Render-URL,
-    чтобы бот не засыпал.
-    """
-    def ping():
-        while True:
-            try:
-                url = "https://kfc-bot-i93o.onrender.com"  # <-- замени на свой URL
-                response = requests.get(url)
-                print(f"[KEEP-ALIVE] Статус: {response.status_code}")
-            except Exception as e:
-                print(f"[KEEP-ALIVE] Ошибка: {e}")
-            time.sleep(300)  # каждые 5 минут
-
-    threading.Thread(target=ping, daemon=True).start()
-    
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 # Инициализация бота
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
@@ -1097,11 +1076,29 @@ import sys
 import logging
 import os
 import threading
+import time
+import requests
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-logging.basicConfig(level=logging.INFO)
+from core import run_bot, shutdown  # импортируй из core.py, если нужно
 
-# Фейковый веб-сервер, чтобы Render не убивал процесс
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# ✅ Пингует свой URL, чтобы не заснуть
+def keep_alive():
+    def ping():
+        while True:
+            try:
+                url = "https://kfc-bot-i93o.onrender.com"  # твой рендер-адрес
+                response = requests.get(url)
+                logger.info(f"[KEEP-ALIVE] Статус: {response.status_code}")
+            except Exception as e:
+                logger.warning(f"[KEEP-ALIVE] Ошибка: {e}")
+            time.sleep(300)
+    threading.Thread(target=ping, daemon=True).start()
+
+# ✅ Фейковый HTTP-сервер, чтобы Render думал, что порт используется
 def run_fake_server():
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -1113,20 +1110,20 @@ def run_fake_server():
     server = HTTPServer(("0.0.0.0", port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
+# ✅ Основной запуск бота с polling
 async def main():
     try:
-        keep_alive()  # <- запуск фонового пинга
-        await bot.delete_webhook(drop_pending_updates=True)
-        await dp.start_polling(bot)
-        run_fake_server()  # запускаем фейковый сервер
+        keep_alive()
+        run_fake_server()
+        from core import bot, dp  # импорт после запуска серверов
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     except Exception as e:
-        logging.exception("❌ Ошибка в main, бот будет перезапущен")
+        logger.exception("❌ Ошибка в main, бот будет перезапущен")
         sys.exit(1)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("⏹️ Бот остановлен вручную")
+        logger.info("⏹️ Бот остановлен вручную")
