@@ -13,7 +13,27 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
+import time
+import threading
+import requests
 
+def keep_alive():
+    """
+    Отправляет HTTP-запрос каждые 5 минут на собственный Render-URL,
+    чтобы бот не засыпал.
+    """
+    def ping():
+        while True:
+            try:
+                url = "https://kfc-bot-i93o.onrender.com"  # <-- замени на свой URL
+                response = requests.get(url)
+                print(f"[KEEP-ALIVE] Статус: {response.status_code}")
+            except Exception as e:
+                print(f"[KEEP-ALIVE] Ошибка: {e}")
+            time.sleep(300)  # каждые 5 минут
+
+    threading.Thread(target=ping, daemon=True).start()
+    
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -1095,6 +1115,9 @@ def run_fake_server():
 
 async def main():
     try:
+        keep_alive()  # <- запуск фонового пинга
+        await bot.delete_webhook(drop_pending_updates=True)
+        await dp.start_polling(bot)
         run_fake_server()  # запускаем фейковый сервер
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
