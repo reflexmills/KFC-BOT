@@ -1080,8 +1080,6 @@ import time
 import requests
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from core import run_bot, shutdown  # импортируй из core.py, если нужно
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
