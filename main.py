@@ -241,26 +241,31 @@ async def process_quantity(message: types.Message, state: FSMContext):
 
 @dp.message(OrderStates.choosing_duration)
 async def process_duration(message: types.Message, state: FSMContext):
-    text = message.text.replace(",", ".").strip()
+    raw = message.text.replace(",", ".").strip()
 
     try:
-        duration = float(text)
+        duration = float(raw)
     except ValueError:
-        await message.answer("Введите корректную длительность, например 1.5 (1 час 30 минут).")
+        await message.answer("❌ Введите длительность в формате: 1.5 (для 1ч 30м), 2.0, 0.5 и т.д.")
         return
 
     data = await state.get_data()
-    price_info = data['price_info']
+    price_info = data.get("price_info")
 
-    if duration < price_info['min']:
-        await message.answer(f"Минимальная длительность: {price_info['min']} час. Введите другое значение:")
+    if not price_info or "price" not in price_info or "min" not in price_info:
+        await message.answer("⚠ Не удалось получить цену услуги. Попробуйте начать заново.")
+        await state.clear()
         return
 
-    total_price = round(duration * price_info['price'], 2)
+    if duration < price_info["min"]:
+        await message.answer(f"Минимальная длительность: {price_info['min']} час(а). Введите больше.")
+        return
+
+    total_price = round(duration * price_info["price"], 2)
     await state.update_data(duration=duration, total_price=total_price)
 
     await message.answer(
-        "Введите дату стрима в формате ДД.ММ (например, 15.06):",
+        "📅 Введите дату стрима в формате ДД.ММ (например, 15.06):",
         reply_markup=get_back_kb()
     )
     await state.set_state(OrderStates.choosing_date)
