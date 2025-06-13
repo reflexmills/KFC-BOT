@@ -239,12 +239,14 @@ async def process_quantity(message: types.Message, state: FSMContext):
     )
     await state.set_state(OrderStates.choosing_date)
 
-@dp.message(OrderStates.choosing_duration, F.text.regexp(r'^\\d+(\\.\\d+)?$'))
+@dp.message(OrderStates.choosing_duration)
 async def process_duration(message: types.Message, state: FSMContext):
+    text = message.text.replace(",", ".").strip()
+
     try:
-        duration = float(message.text.replace(",", "."))
+        duration = float(text)
     except ValueError:
-        await message.answer("Введите корректную длительность, например 1.5")
+        await message.answer("Введите корректную длительность, например 1.5 (1 час 30 минут).")
         return
 
     data = await state.get_data()
