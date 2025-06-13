@@ -54,14 +54,26 @@ class AdminStates(StatesGroup):
     removing_admin = State()
     changing_balance = State()
 
-# Цены услуг (теперь цена за 1 единицу)
 SERVICE_PRICES = {
-    "Подписчики": {"price": 1, "min": 10, "unit": "шт", "type": "quantity"},
-    "Живой чат RU": {"price": 319, "min": 1, "unit": "час", "type": "duration"},
-    "Живой чат ENG": {"price": 419, "min": 1, "unit": "час", "type": "duration"},
-    "Зрители": {"price": 1, "min": 10, "unit": "шт", "type": "quantity"}
+    "Twitch": {
+        "Живой чат RU": {"price": 250, "min": 1, "unit": "час", "type": "duration"},
+        "Живой чат ENG": {"price": 400, "min": 1, "unit": "час", "type": "duration"},
+        "Зрители": {"price": 1, "min": 5, "unit": "шт", "type": "quantity"},
+        "Фолловеры": {"price": 1, "min": 5, "unit": "шт", "type": "quantity"}
+    },
+    "Kick": {
+        "Живой чат RU": {"price": 319, "min": 1, "unit": "час", "type": "duration"},
+        "Живой чат ENG": {"price": 419, "min": 1, "unit": "час", "type": "duration"},
+        "Зрители": {"price": 1, "min": 5, "unit": "шт", "type": "quantity"},
+        "Фолловеры": {"price": 1, "min": 5, "unit": "шт", "type": "quantity"}
+    },
+    "YouTube": {
+        "Живой чат RU": {"price": 319, "min": 1, "unit": "час", "type": "duration"},
+        "Живой чат ENG": {"price": 419, "min": 1, "unit": "час", "type": "duration"},
+        "Зрители": {"price": 1, "min": 5, "unit": "шт", "type": "quantity"},
+        "Фолловеры": {"price": 1, "min": 5, "unit": "шт", "type": "quantity"}
+    }
 }
-
 # Словарь изображений платформ
 PLATFORM_IMAGES = {
     "YouTube": "https://radikal.cloud/i/photo-5350495139111499792-y.VJefY6",
@@ -225,19 +237,24 @@ async def process_quantity(message: types.Message, state: FSMContext):
     )
     await state.set_state(OrderStates.choosing_date)
 
-@dp.message(OrderStates.choosing_duration, F.text.regexp(r'^\d+\sчас\(а\)$'))
+@dp.message(OrderStates.choosing_duration, F.text.regexp(r'^\\d+(\\.\\d+)?$'))
 async def process_duration(message: types.Message, state: FSMContext):
-    duration = int(message.text.split()[0])
+    try:
+        duration = float(message.text.replace(",", "."))
+    except ValueError:
+        await message.answer("Введите корректную длительность, например 1.5")
+        return
+
     data = await state.get_data()
     price_info = data['price_info']
-    
+
     if duration < price_info['min']:
         await message.answer(f"Минимальная длительность: {price_info['min']} час. Введите другое значение:")
         return
-    
-    total_price = duration * price_info['price']
+
+    total_price = round(duration * price_info['price'], 2)
     await state.update_data(duration=duration, total_price=total_price)
-    
+
     await message.answer(
         "Введите дату стрима в формате ДД.ММ (например, 15.06):",
         reply_markup=get_back_kb()
