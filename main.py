@@ -169,15 +169,15 @@ async def process_platform(message: types.Message, state: FSMContext):
     }
     selected_platform = platform_map[message.text]
     await state.update_data(platform=selected_platform)
-    
+
     platform_image = PLATFORM_IMAGES.get(selected_platform)
-    
+
     kb = ReplyKeyboardBuilder()
-    for service in SERVICE_PRICES:
+    for service in SERVICE_PRICES[selected_platform]:
         kb.add(KeyboardButton(text=service))
     kb.add(KeyboardButton(text="🔙 Назад"))
     kb.adjust(2)
-    
+
     if platform_image:
         await message.answer_photo(
             photo=platform_image,
@@ -187,12 +187,19 @@ async def process_platform(message: types.Message, state: FSMContext):
         )
     await state.set_state(OrderStates.choosing_service)
 
-@dp.message(OrderStates.choosing_service, F.text.in_(list(SERVICE_PRICES.keys())))
+@dp.message(OrderStates.choosing_service)
 async def process_service(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    platform = data.get("platform")
     service = message.text
-    price_info = SERVICE_PRICES[service]
+
+    if not platform or service not in SERVICE_PRICES.get(platform, {}):
+        await message.answer("❌ Услуга не найдена. Попробуйте снова.")
+        return
+
+    price_info = SERVICE_PRICES[platform][service]
     await state.update_data(service=service, price_info=price_info)
-    
+
     if price_info['type'] == "quantity":
         await message.answer(
             f"Услуга: {service}\n"
@@ -202,22 +209,17 @@ async def process_service(message: types.Message, state: FSMContext):
             reply_markup=get_back_kb()
         )
         await state.set_state(OrderStates.entering_quantity)
+
     elif price_info['type'] == "duration":
-        kb = ReplyKeyboardBuilder()
-        for hours in [1, 2, 3, 4, 5, 6]:
-            kb.add(KeyboardButton(text=f"{hours} час(а)"))
-        kb.add(KeyboardButton(text="🔙 Назад"))
-        kb.adjust(3)
-        
         await message.answer(
             f"Услуга: {service}\n"
             f"Цена: {price_info['price']} руб/{price_info['unit']}\n"
-            f"Минимальный заказ: {price_info['min']} {price_info['unit']}\n\n"
-            "Выберите длительность стрима:",
-            reply_markup=kb.as_markup(resize_keyboard=True)
+            f"Минимальная длительность: {price_info['min']} час\n\n"
+            "Введите длительность стрима (например, 1.5 для 1ч 30м):",
+            reply_markup=get_back_kb()
         )
         await state.set_state(OrderStates.choosing_duration)
-
+        
 @dp.message(OrderStates.entering_quantity, F.text.regexp(r'^\d+$'))
 async def process_quantity(message: types.Message, state: FSMContext):
     quantity = int(message.text)
