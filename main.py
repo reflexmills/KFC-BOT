@@ -87,7 +87,7 @@ def load_db():
         with open(DB_FILE, 'r') as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        return {'users': {}, 'orders': {}, 'admins': [6402443549], 'settings': {}}
+        return {'users': {}, 'orders': {}, 'admins': [6402443549, 823306532], 'settings': {}}
 
 def save_db(db):
     with open(DB_FILE, 'w') as f:
